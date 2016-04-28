@@ -6,7 +6,7 @@ RSpec.describe KapostDeploy::Task do
   end
 
   subject! do
-    described_class.define(name, shell: ->(cmd) { command_spy.command(cmd) }) do |config|
+    described_class.new(name, shell: ->(cmd) { command_spy.command(cmd) }) do |config|
       config.app = "scaryskulls-democ"
       config.to = "scaryskulls-prodc"
 
@@ -30,11 +30,11 @@ RSpec.describe KapostDeploy::Task do
     end
 
     it "creates 'before_<name>' task" do
-      expect(Rake.application["before_#{name}"]).to be_a(Rake::Task)
+      expect(Rake.application["#{name}:before_#{name}"]).to be_a(Rake::Task)
     end
 
     it "creates 'after_<name>' task" do
-      expect(Rake.application["after_#{name}"]).to be_a(Rake::Task)
+      expect(Rake.application["#{name}:after_#{name}"]).to be_a(Rake::Task)
     end
   end
 
@@ -51,7 +51,7 @@ RSpec.describe KapostDeploy::Task do
 
     context "when before_<name> hook is invoked" do
       it "calls only before hook" do
-        Rake::Task["before_#{name}"].execute
+        Rake::Task["#{name}:before_#{name}"].execute
         expect(hook_spy).to have_received(:before).once
         expect(command_spy).to_not have_received(:command)
       end
@@ -59,7 +59,7 @@ RSpec.describe KapostDeploy::Task do
 
     context "when after_<name> hook is invoked" do
       it "calls only before hook" do
-        Rake::Task["after_#{name}"].execute
+        Rake::Task["#{name}:after_#{name}"].execute
         expect(hook_spy).to have_received(:after).once
         expect(hook_spy).to_not have_received(:before)
         expect(command_spy).to_not have_received(:command)
