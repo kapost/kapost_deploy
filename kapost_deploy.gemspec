@@ -29,6 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "terminal-notifier-guard"
   spec.add_development_dependency "rubocop", "~> 0.37"
   spec.add_development_dependency "codeclimate-test-reporter"
+  spec.add_development_dependency "rubygems-tasks"
 
   spec.files = Dir["lib/**/*", "vendor/**/*"]
   spec.extra_rdoc_files = Dir["README*", "LICENSE*"]
