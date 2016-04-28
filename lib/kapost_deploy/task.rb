@@ -20,7 +20,7 @@ module KapostDeploy
   #
   #   require 'kapost_deploy/task'
   #
-  #   KapostDeploy::Task.define do |config|
+  #   KapostDeploy::Task.new do |config|
   #     config.app = 'cabbage-democ'
   #     config.to = 'cabbage-prodc'
   #
@@ -60,13 +60,15 @@ module KapostDeploy
 
     attr_accessor :name
 
-    def self.define(name = :promote, shell: method(:sh)) # :yield: self
-      instance = new(name, shell)
+    def initialize(name = :promote, shell: method(:sh)) # :yield: self
+      defaults
+      @name = name
+      @shell = shell
 
-      yield instance if block_given?
+      yield self if block_given?
 
-      instance.validate
-      instance.define
+      validate
+      define
     end
 
     def before(&block)
@@ -98,8 +100,8 @@ module KapostDeploy
       define_dependencies
       define_hooks
 
-      desc "Promote application to production environment"
-      task name.to_s => :install_pipelines do
+      desc "Promote #{app} to #{to.join(",")}"
+      task name.to_s => "#{name}:install_pipelines" do
         @before.call
         promote
         @after.call
@@ -108,20 +110,16 @@ module KapostDeploy
 
     private
 
-    def initialize(name, shell)
-      defaults
-      @name = name
-      @shell = shell
-    end
-
     def shell(command)
       @shell.call(command)
     end
 
     def define_dependencies
-      desc "Install heroku pipelines addon if necessary"
-      task :install_pipelines do
-        shell("heroku plugins:install heroku-pipelines") unless pipelines_installed?
+      namespace :"#{name}" do
+        desc "Install heroku pipelines addon if necessary"
+        task :install_pipelines do
+          shell("heroku plugins:install heroku-pipelines") unless pipelines_installed?
+        end
       end
     end
 
@@ -130,14 +128,16 @@ module KapostDeploy
     end
 
     def define_hooks
-      desc "Perform after-promotion tasks"
-      task :"after_#{name}" do
-        @after.call
-      end
+      namespace :"#{name}" do
+        desc "Perform after-promotion tasks"
+        task :"after_#{name}" do
+          @after.call
+        end
 
-      desc "Perform before-promotion tasks"
-      task :"before_#{name}" do
-        @before.call
+        desc "Perform before-promotion tasks"
+        task :"before_#{name}" do
+          @before.call
+        end
       end
     end
 

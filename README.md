@@ -22,7 +22,7 @@
 
 # Features
 
-`KapostDeploy::Task.define` creates the following rake tasks to aid in the promotion deployment of
+`KapostDeploy::Task.new` creates the following rake tasks to aid in the promotion deployment of
 standard heroku applications (usually provisioned using https://github.com/kapost/heroku-cabbage)
 
     [promote]
@@ -38,7 +38,7 @@ Simple Example:
 
     require 'kapost_deploy/task'
 
-    KapostDeploy::Task.define do |config|
+    KapostDeploy::Task.new do |config|
       config.app = 'cabbage-democ'
       config.to = 'cabbage-prodc'
 
@@ -50,7 +50,7 @@ Simple Example:
 A slightly more complex example which will create 6 rake tasks: before_stage, stage,
 after_stage, before_promote, promote, after_promote
 
-    KapostDeploy::Task.define(:stage) do |config|
+    KapostDeploy::Task.new(:stage) do |config|
       config.app = 'cabbage-stagingc'
       config.to = %w[cabbage-sandboxc cabbage-democ]
 
@@ -61,7 +61,7 @@ after_stage, before_promote, promote, after_promote
       end
     end
 
-    KapostDeploy::Task.define(:promote) do |config|
+    KapostDeploy::Task.new(:promote) do |config|
       config.app = 'cabbage-sandbox1c'
       config.to = 'cabbage-prodc'
 
