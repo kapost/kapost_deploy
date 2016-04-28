@@ -1,5 +1,6 @@
 require "rake"
 require "rake/tasklib"
+require "slack-notify"
 
 module KapostDeploy
   ##
@@ -47,6 +48,8 @@ module KapostDeploy
 
     attr_accessor :name
 
+    attr_accessor :slack_config
+
     def initialize(name = :promote, shell: method(:sh)) # :yield: self
       defaults
       @name = name
@@ -73,6 +76,7 @@ module KapostDeploy
     def defaults
       @name = :promote
       @app = nil
+      @slack_config = nil
       @to = []
       @before = -> {}
       @after = -> {}
@@ -91,6 +95,7 @@ module KapostDeploy
         shell("heroku plugins:install heroku-pipelines") unless pipelines_installed?
         @before.call
         promote
+        notify_slack
         @after.call
       end
     end
@@ -121,6 +126,24 @@ module KapostDeploy
 
     def promote
       shell("heroku pipelines:promote -a #{app} --to #{to.join(",")}")
+    end
+
+    def notify_slack
+      return unless slack_config
+
+      addl = slack_config.fetch(:additional_message, "")
+      addl = "\n#{addl}" unless addl.empty?
+
+      message = "#{identity} promoted *#{app}* to *#{to.join(",")}*#{addl}"
+      slack.notify(message)
+    end
+
+    def identity
+      @identity ||= `whoami`.chomp
+    end
+
+    def slack
+      @slack ||= SlackNotify::Client.new(slack_config)
     end
   end
 end
