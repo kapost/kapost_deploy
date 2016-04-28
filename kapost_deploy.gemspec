@@ -13,9 +13,9 @@ Gem::Specification.new do |spec|
   spec.license = "MIT"
 
   spec.add_dependency "rake", "~> 10.0"
+  spec.add_dependency "heroku", "~> 3.43"
 
   spec.add_development_dependency "bundler", "~> 1.11"
-  spec.add_development_dependency "gemsmith", "~> 7.6"
   spec.add_development_dependency "pry"
   spec.add_development_dependency "pry-byebug"
   spec.add_development_dependency "pry-remote"
