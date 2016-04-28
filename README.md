@@ -9,13 +9,10 @@
 # Table of Contents
 
 - [Features](#features)
-- [Screencasts](#screencasts)
 - [Requirements](#requirements)
 - [Setup](#setup)
-- [Usage](#usage)
 - [Tests](#tests)
 - [Versioning](#versioning)
-- [Code of Conduct](#code-of-conduct)
 - [Contributions](#contributions)
 - [License](#license)
 - [History](#history)
@@ -25,7 +22,55 @@
 
 # Features
 
-# Screencasts
+KapostDeploy::Task creates the following rake tasks to aid in the promotion deployment of
+standard heroku applications (usually provisioned using https://github.com/kapost/heroku-cabbage)
+
+[promote]
+  Promotes a source environment to production
+
+[before_promote]
+  Executes application-defined before promotion code as defined in task config (See below)
+
+[after_promote]
+  Executes application-defined after promotion code as defined in task config (See below)
+
+Simple Example:
+
+  require 'kapost_deploy/task'
+
+  KapostDeploy::Task.new do |config|
+    config.app = 'cabbage-democ'
+    config.to = 'cabbage-prodc'
+
+    config.after do
+      puts "It's Miller time"
+    end
+  end
+
+A slightly more complex example which will create 6 rake tasks: before_stage, stage,
+after_stage, before_promote, promote, after_promote
+
+  KapostDeploy::Task.new(:stage) do |config|
+    config.app = 'cabbage-stagingc'
+    config.to = %w[cabbage-sandboxc cabbage-democ]
+
+    config.after do
+      sleep 60*2 wait for dynos to restart
+      slack.notify "The eagle has landed. [Go validate](https://testbed.sandbox.com/dashboard)!"
+      Launchy.open("https://testbed.sandbox.com/dashboard")
+    end
+  end
+
+  KapostDeploy::Task.new(:promote) do |config|
+    config.app = 'cabbage-sandbox1c'
+    config.to = 'cabbage-prodc'
+
+    config.before do
+      puts 'Are you sure you did x, y, and z? yes/no: '
+      confirm = gets.strip
+      exit(1) unless confirm.downcase == 'yes'
+    end
+  end
 
 # Requirements
 
@@ -41,8 +86,6 @@ Add the following to your Gemfile:
 
     gem "kapost_deploy"
 
-# Usage
-
 # Tests
 
 To test, run:
@@ -57,19 +100,18 @@ Read [Semantic Versioning](http://semver.org) for details. Briefly, it means:
 - Minor (x.Y.z) - Incremented for new, backwards compatible public API enhancements and/or bug fixes.
 - Major (X.y.z) - Incremented for any backwards incompatible public API changes.
 
-# Code of Conduct
-
-Please note that this project is released with a [CODE OF CONDUCT](CODE_OF_CONDUCT.md). By participating in this project
-you agree to abide by its terms.
-
 # Contributions
 
-Read [CONTRIBUTING](CONTRIBUTING.md) for details.
+Fork the project.
+Make your feature addition or bug fix.
+Do not bump the version number.
+Send me a pull request. Bonus points for topic branches.
 
 # License
 
-Copyright (c) 2016 []().
-Read the [LICENSE](LICENSE.md) for details.
+MIT
+
+Copyright (c) 2016 [Kapost](http://engineering.kapost.com).
 
 # History
 
@@ -78,4 +120,4 @@ Built with [Gemsmith](https://github.com/bkuhlmann/gemsmith).
 
 # Credits
 
-Developed by [Brandon Croft]() at []().
+Developed by [Brandon Croft](http://brandoncroft.com) at [brandon@kapost.com](mailto:brandon@kapost.com).
