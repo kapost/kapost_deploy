@@ -74,6 +74,18 @@ stage:after_stage, promote:before_promote, promote, promote:after_promote
 # Requirements
 
 0. [MRI 2.3.0](https://www.ruby-lang.org)
+0. [Heroku Toolbelt](https://github.com/heroku/heroku) installed
+
+# Configuration Options
+
+* `app`: The application to be promoted
+* `to`: The downstream application(s) to receive the promotion. For multiple environments, use an array.
+* `slack_config`: An options hash containing the following keys:
+  * `webhook_url`: The webhook URL you added to your slack integrations
+  * `username`: The apparent username of the notifier *defaults to "webhooks bot"*
+  * `channel`: The channel name to post the notification to *defaults to "#general"*
+  * `icon_url`: A URL for the icon image *optional*
+  * `icon_emoji`: Emoji name to use instead of an icon *optional*
 
 # Setup
 
