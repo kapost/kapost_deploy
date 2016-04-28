@@ -1,0 +1,7 @@
+dependencies:
+  pre:
+    - gem install bundler -v 1.11
+
+test:
+  override:
+    - bundle exec rake

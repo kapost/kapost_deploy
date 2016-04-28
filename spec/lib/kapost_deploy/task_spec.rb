@@ -6,7 +6,7 @@ RSpec.describe KapostDeploy::Task do
   end
 
   subject! do
-    described_class.new(name, shell: ->(cmd) { command_spy.command(cmd) }) do |config|
+    described_class.define(name, shell: ->(cmd) { command_spy.command(cmd) }) do |config|
       config.app = "scaryskulls-democ"
       config.to = "scaryskulls-prodc"
 
@@ -68,9 +68,10 @@ RSpec.describe KapostDeploy::Task do
   end
 
   shared_examples_for "a promote command" do
+    let(:expected_command) { "heroku pipelines:promote -a scaryskulls-democ --to scaryskulls-prodc" }
     it "promotes to production" do
       Rake::Task[name].execute
-      expect(command_spy).to have_received(:command).with("heroku pipelines:promote -a scaryskulls-democ --to scaryskulls-prodc").once
+      expect(command_spy).to have_received(:command).with(expected_command).once
     end
   end
 

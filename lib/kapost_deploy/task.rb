@@ -20,7 +20,7 @@ module KapostDeploy
   #
   #   require 'kapost_deploy/task'
   #
-  #   KapostDeploy::Task.new do |config|
+  #   KapostDeploy::Task.define do |config|
   #     config.app = 'cabbage-democ'
   #     config.to = 'cabbage-prodc'
   #
@@ -60,16 +60,13 @@ module KapostDeploy
 
     attr_accessor :name
 
-    def initialize(name = :promote, shell: method(:sh)) # :yield: self
-      defaults
-      @name = name
-      @shell = shell
+    def self.define(name = :promote, shell: method(:sh)) # :yield: self
+      instance = new(name, shell)
 
-      yield self if block_given?
+      yield instance if block_given?
 
-      validate
-
-      define
+      instance.validate
+      instance.define
     end
 
     def before(&block)
@@ -110,6 +107,12 @@ module KapostDeploy
     end
 
     private
+
+    def initialize(name, shell)
+      defaults
+      @name = name
+      @shell = shell
+    end
 
     def shell(command)
       @shell.call(command)

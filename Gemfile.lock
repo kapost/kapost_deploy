@@ -135,7 +135,6 @@ DEPENDENCIES
   pry-rescue
   pry-stack_explorer
   pry-state
-  rake (~> 10.0)
   rb-fsevent
   rspec (~> 3.4)
   rubocop (~> 0.37)
