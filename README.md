@@ -25,52 +25,52 @@
 KapostDeploy::Task creates the following rake tasks to aid in the promotion deployment of
 standard heroku applications (usually provisioned using https://github.com/kapost/heroku-cabbage)
 
-[promote]
-  Promotes a source environment to production
+    [promote]
+      Promotes a source environment to production
 
-[before_promote]
-  Executes application-defined before promotion code as defined in task config (See below)
+    [before_promote]
+      Executes application-defined before promotion code as defined in task config (See below)
 
-[after_promote]
-  Executes application-defined after promotion code as defined in task config (See below)
+    [after_promote]
+      Executes application-defined after promotion code as defined in task config (See below)
 
 Simple Example:
 
-  require 'kapost_deploy/task'
+    require 'kapost_deploy/task'
 
-  KapostDeploy::Task.new do |config|
-    config.app = 'cabbage-democ'
-    config.to = 'cabbage-prodc'
+    KapostDeploy::Task.new do |config|
+      config.app = 'cabbage-democ'
+      config.to = 'cabbage-prodc'
 
-    config.after do
-      puts "It's Miller time"
+      config.after do
+        puts "It's Miller time"
+      end
     end
-  end
 
 A slightly more complex example which will create 6 rake tasks: before_stage, stage,
 after_stage, before_promote, promote, after_promote
 
-  KapostDeploy::Task.new(:stage) do |config|
-    config.app = 'cabbage-stagingc'
-    config.to = %w[cabbage-sandboxc cabbage-democ]
+    KapostDeploy::Task.new(:stage) do |config|
+      config.app = 'cabbage-stagingc'
+      config.to = %w[cabbage-sandboxc cabbage-democ]
 
-    config.after do
-      sleep 60*2 wait for dynos to restart
-      slack.notify "The eagle has landed. [Go validate](https://testbed.sandbox.com/dashboard)!"
-      Launchy.open("https://testbed.sandbox.com/dashboard")
+      config.after do
+        sleep 60*2 wait for dynos to restart
+        slack.notify "The eagle has landed. [Go validate](https://testbed.sandbox.com/dashboard)!"
+        Launchy.open("https://testbed.sandbox.com/dashboard")
+      end
     end
-  end
 
-  KapostDeploy::Task.new(:promote) do |config|
-    config.app = 'cabbage-sandbox1c'
-    config.to = 'cabbage-prodc'
+    KapostDeploy::Task.new(:promote) do |config|
+      config.app = 'cabbage-sandbox1c'
+      config.to = 'cabbage-prodc'
 
-    config.before do
-      puts 'Are you sure you did x, y, and z? yes/no: '
-      confirm = gets.strip
-      exit(1) unless confirm.downcase == 'yes'
+      config.before do
+        puts 'Are you sure you did x, y, and z? yes/no: '
+        confirm = gets.strip
+        exit(1) unless confirm.downcase == 'yes'
+      end
     end
-  end
 
 # Requirements
 
