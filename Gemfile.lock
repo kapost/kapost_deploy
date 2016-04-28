@@ -118,6 +118,7 @@ GEM
       ruby-progressbar (~> 1.7)
       unicode-display_width (~> 1.0, >= 1.0.1)
     ruby-progressbar (1.8.0)
+    rubygems-tasks (0.2.4)
     rubyzip (1.1.7)
     shellany (0.0.1)
     simplecov (0.11.2)
@@ -148,6 +149,7 @@ DEPENDENCIES
   rb-fsevent
   rspec (~> 3.4)
   rubocop (~> 0.37)
+  rubygems-tasks
   terminal-notifier
   terminal-notifier-guard
 
