@@ -3,19 +3,6 @@ require "rake/tasklib"
 
 module KapostDeploy
   ##
-  # KapostDeploy::Task creates the following rake tasks to aid in the promotion deployment of
-  # standard heroku applications (usually provisioned using
-  # https://github.com/kapost/heroku-cabbage)
-  #
-  # [promote]
-  #   Promotes a source envirnment to production
-  #
-  # [before_promote]
-  #   Executes application-defined before promotion code as defined in task config (See below)
-  #
-  # [after_promote]
-  #   Executes application-defined after promotion code as defined in task config (See below)
-  #
   # Simple Example:
   #
   #   require 'kapost_deploy/task'
@@ -97,11 +84,11 @@ module KapostDeploy
     end
 
     def define
-      define_dependencies
       define_hooks
 
       desc "Promote #{app} to #{to.join(",")}"
-      task name.to_s => "#{name}:install_pipelines" do
+      task name.to_s do
+        shell("heroku plugins:install heroku-pipelines") unless pipelines_installed?
         @before.call
         promote
         @after.call
@@ -114,27 +101,18 @@ module KapostDeploy
       @shell.call(command)
     end
 
-    def define_dependencies
-      namespace :"#{name}" do
-        desc "Install heroku pipelines addon if necessary"
-        task :install_pipelines do
-          shell("heroku plugins:install heroku-pipelines") unless pipelines_installed?
-        end
-      end
-    end
-
     def pipelines_installed?
       `heroku plugins` =~ /^heroku-pipelines@/
     end
 
     def define_hooks
       namespace :"#{name}" do
-        desc "Perform after-promotion tasks"
+        desc "Perform after-#{name} tasks"
         task :"after_#{name}" do
           @after.call
         end
 
-        desc "Perform before-promotion tasks"
+        desc "Perform before-#{name} tasks"
         task :"before_#{name}" do
           @before.call
         end

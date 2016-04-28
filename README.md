@@ -22,16 +22,15 @@
 
 # Features
 
-`KapostDeploy::Task.new` creates the following rake tasks to aid in the promotion deployment of
-standard heroku applications (usually provisioned using https://github.com/kapost/heroku-cabbage)
+`KapostDeploy::Task.new` creates the following rake tasks to aid in the pipeline promotion deployment of Heroku applications
 
     [promote]
       Promotes a source environment to production
 
-    [before_promote]
+    [promote:before_promote]
       Executes application-defined before promotion code as defined in task config (See below)
 
-    [after_promote]
+    [promote:after_promote]
       Executes application-defined after promotion code as defined in task config (See below)
 
 Simple Example:
@@ -47,8 +46,8 @@ Simple Example:
       end
     end
 
-A slightly more complex example which will create 6 rake tasks: before_stage, stage,
-after_stage, before_promote, promote, after_promote
+A slightly more complex example which will create 6 rake tasks: stage:before_stage, stage,
+stage:after_stage, promote:before_promote, promote, promote:after_promote
 
     KapostDeploy::Task.new(:stage) do |config|
       config.app = 'cabbage-stagingc'
