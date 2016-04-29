@@ -1,6 +1,5 @@
 require "rake"
 require "rake/tasklib"
-require "slack-notify"
 
 module KapostDeploy
   ##
@@ -48,8 +47,6 @@ module KapostDeploy
 
     attr_accessor :name
 
-    attr_accessor :slack_config
-
     def initialize(name = :promote, shell: method(:sh)) # :yield: self
       defaults
       @name = name
@@ -73,6 +70,10 @@ module KapostDeploy
       @to = Array(to)
     end
 
+    def add_plugin(plugin)
+      plugins << plugin
+    end
+
     def defaults
       @name = :promote
       @app = nil
@@ -80,6 +81,7 @@ module KapostDeploy
       @to = []
       @before = -> {}
       @after = -> {}
+      @plugins = []
     end
 
     def validate
@@ -93,14 +95,19 @@ module KapostDeploy
       desc "Promote #{app} to #{to.join(",")}"
       task name.to_s do
         shell("heroku plugins:install heroku-pipelines") unless pipelines_installed?
-        @before.call
-        promote
-        notify_slack
-        @after.call
+        promote_with_hooks
       end
     end
 
     private
+
+    attr_accessor :plugins
+
+    def promote_with_hooks
+      Rake.application[:"#{name}:before_#{name}"].execute
+      promote
+      Rake.application[:"#{name}:after_#{name}"].execute
+    end
 
     def shell(command)
       @shell.call(command)
@@ -112,38 +119,24 @@ module KapostDeploy
 
     def define_hooks
       namespace :"#{name}" do
-        desc "Perform after-#{name} tasks"
-        task :"after_#{name}" do
-          @after.call
-        end
+        define_hook(:before)
+        define_hook(:after)
+      end
+    end
 
-        desc "Perform before-#{name} tasks"
-        task :"before_#{name}" do
-          @before.call
+    def define_hook(kind)
+      desc "Perform #{kind}-#{name} tasks"
+      task :"#{kind}_#{name}" do
+        instance_variable_get(:"@#{kind}").call
+        plugins.each do |p|
+          plugin = p.new(self)
+          plugin.send(kind) if plugin.respond_to?(kind)
         end
       end
     end
 
     def promote
       shell("heroku pipelines:promote -a #{app} --to #{to.join(",")}")
-    end
-
-    def notify_slack
-      return unless slack_config
-
-      addl = slack_config.fetch(:additional_message, "")
-      addl = "\n#{addl}" unless addl.empty?
-
-      message = "#{identity} promoted *#{app}* to *#{to.join(",")}*#{addl}"
-      slack.notify(message)
-    end
-
-    def identity
-      @identity ||= `whoami`.chomp
-    end
-
-    def slack
-      @slack ||= SlackNotify::Client.new(slack_config)
     end
   end
 end
