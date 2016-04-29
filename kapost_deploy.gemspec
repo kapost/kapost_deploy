@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Execute deployments swiftly and safely using `rake promote`"
   spec.license = "MIT"
 
-  spec.add_dependency "rake", "~> 10.0"
+  spec.add_dependency "rake", ">= 10.0"
   spec.add_dependency "heroku", "~> 3.43"
   spec.add_dependency "slack-notify", "~> 0.4.1"
 
