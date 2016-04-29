@@ -1,9 +1,9 @@
 PATH
   remote: .
   specs:
-    kapost_deploy (0.1.0)
+    kapost_deploy (0.1.1)
       heroku (~> 3.43)
-      rake (~> 10.0)
+      rake (>= 10.0)
       slack-notify (~> 0.4.1)
 
 GEM
