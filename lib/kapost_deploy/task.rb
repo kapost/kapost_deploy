@@ -9,7 +9,7 @@ module KapostDeploy
   #
   #   require 'kapost_deploy/task'
   #
-  #   KapostDeploy::Task.new do |config|
+  #   KapostDeploy::Task.define do |config|
   #     config.pipeline = 'cabbage'
   #     config.heroku_api_token = ENV.fetch('HEROKU_API_TOKEN')
   #     config.app = 'cabbage-democ'
@@ -20,34 +20,6 @@ module KapostDeploy
   #     end
   #   end
   #
-  # A slightly more complex example which will create 6 rake tasks: before_stage, stage,
-  # after_stage, before_promote, promote, after_promote
-  #
-  #   KapostDeploy::Task.new(:stage) do |config|
-  #     config.pipeline = 'cabbage'
-  #     config.heroku_api_token = ENV.fetch('HEROKU_API_TOKEN')
-  #     config.app = 'cabbage-stagingc'
-  #     config.to = 'cabbage-sandboxc'
-  #
-  #     config.after do
-  #       sleep 60*2 # wait for dynos to restart
-  #       notifier.ping "The eagle has landed. [Go validate](https://testbed.sandbox.com/dashboard)!"
-  #       Launchy.open("https://testbed.sandbox.com/dashboard")
-  #     end
-  #   end
-  #
-  #   KapostDeploy::Task.new(:promote) do |config|
-  #     config.pipeline = 'cabbage'
-  #     config.heroku_api_token = ENV.fetch('HEROKU_API_TOKEN')
-  #     config.app = 'cabbage-sandbox1c'
-  #     config.to = 'cabbage-prodc'
-  #
-  #     config.before do
-  #       puts 'Are you sure you did x, y, and z? yes/no: '
-  #       confirm = gets.strip
-  #       exit(1) unless confirm.downcase == 'yes'
-  #     end
-  #   end
   class Task < Rake::TaskLib
     attr_accessor :app
 

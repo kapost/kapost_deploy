@@ -22,7 +22,7 @@
 
 # Features
 
-`KapostDeploy::Task.new` creates the following rake tasks to aid in the pipeline promotion deployment of Heroku applications
+`KapostDeploy::Task.define` creates the following rake tasks to aid in the pipeline promotion deployment of Heroku applications
 
     [promote]
       Promotes a source environment to production
@@ -35,11 +35,13 @@
 
 Simple Example:
 
-    require 'kapost_deploy/task'
+    require "kapost_deploy/task"
 
-    KapostDeploy::Task.new do |config|
-      config.app = 'cabbage-democ'
-      config.to = 'cabbage-prodc'
+    KapostDeploy::Task.define do |config|
+      config.app = "cabbage-staging"
+      config.to = "cabbage-production"
+      config.pipeline = "cabbage"
+      config.heroku_api_token = "123"
 
       config.after do
         puts "It's Miller time"
@@ -49,26 +51,56 @@ Simple Example:
 A slightly more complex example which will create 6 rake tasks: stage:before_stage, stage,
 stage:after_stage, promote:before_promote, promote, promote:after_promote
 
-    KapostDeploy::Task.new(:stage) do |config|
-      config.app = 'cabbage-stagingc'
-      config.to = %w[cabbage-sandboxc cabbage-democ]
+    require "kapost_deploy/task"
+    require "kapost_deploy/plugins/slack_after_promote"
+    require "kapost_deploy/plugins/slack_github_diff"
+    require "kapost_deploy/plugins/db_migrate"
+
+    CONFIG = {
+      slack_config: {
+        webhook_url: "https://hooks.slack.com/services/34326/FDSJFH127/68357sdhfjhHSJGFNMDngsd",
+        channel: "#danger",
+        icon_url: "http://yourcompany.s3.amazonaws.com/logo.png"
+      },
+      git_config: {
+        github_repo: "yourcompany/widget"
+      }
+    }.freeze
+
+    KapostDeploy::Task.define(:stage) do |config|
+      config.app = "cabbage-staging"
+      config.to = "cabbage-sandbox"
+      config.pipeline = "cabbage"
+      config.heroku_api_token = "123"
+
+      config.options = CONFIG
 
       config.after do
         sleep 60*2 wait for dynos to restart
         slack.notify "The eagle has landed. [Go validate](https://testbed.sandbox.com/dashboard)!"
         Launchy.open("https://testbed.sandbox.com/dashboard")
       end
+
+      config.add_plugin(KapostDeploy::Plugins::DbMigrate)
     end
 
-    KapostDeploy::Task.new(:promote) do |config|
-      config.app = 'cabbage-sandbox1c'
-      config.to = 'cabbage-prodc'
+    KapostDeploy::Task.define do |config|
+      config.app = "cabbage-sandboxc"
+      config.to = "cabbage-production"
+      config.pipeline = "cabbage"
+      config.heroku_api_token = "123"
+
+      config.options = CONFIG
 
       config.before do
-        puts 'Are you sure you did x, y, and z? yes/no: '
+        puts "Are you sure you did x, y, and z? yes/no: "
         confirm = gets.strip
-        exit(1) unless confirm.downcase == 'yes'
+        exit(1) unless confirm.downcase == "yes"
       end
+
+      config.add_plugin(KapostDeploy::Plugins::SlackGithubDiff)
+      config.add_plugin(KapostDeploy::Plugins::DbMigrate)
+      config.add_plugin(KapostDeploy::Plugins::SlackAfterPromote)
     end
 
 # Requirements
@@ -78,14 +110,19 @@ stage:after_stage, promote:before_promote, promote, promote:after_promote
 
 # Configuration Options
 
+* `pipeline`: The application pipeline to promote
+* `heroku_api_token`: Your platform api token. You can retrieve this using `heroku auth:token`
 * `app`: The application to be promoted
 * `to`: The downstream application(s) to receive the promotion. For multiple environments, use an array.
-* `slack_config`: An options hash containing the following keys:
-  * `webhook_url`: The webhook URL you added to your slack integrations
-  * `username`: The apparent username of the notifier *defaults to "webhooks bot"*
-  * `channel`: The channel name to post the notification to *defaults to "#general"*
-  * `icon_url`: A URL for the icon image *optional*
-  * `icon_emoji`: Emoji name to use instead of an icon *optional*
+* `options`: An options hash containing plugin options:
+  * `git_config`: If using github plugins, an options hash containing the following keys:
+    * `github_repo`: The owner/repo string, such as `kapost/kapost_deploy`
+  * `slack_config`: If using slack plugins, an options hash containing the following keys:
+    * `webhook_url`: The webhook URL you added to your slack integrations
+    * `username`: The apparent username of the notifier *defaults to "webhooks bot"*
+    * `channel`: The channel name to post the notification to *defaults to "#general"*
+    * `icon_url`: A URL for the icon image *optional*
+    * `icon_emoji`: Emoji name to use instead of an icon *optional*
 
 # Setup
 
