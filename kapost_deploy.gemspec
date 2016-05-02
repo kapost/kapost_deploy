@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 $LOAD_PATH.push File.expand_path("../lib", __FILE__)
 require "kapost_deploy/identity"
 
@@ -13,8 +14,8 @@ Gem::Specification.new do |spec|
   spec.license = "MIT"
 
   spec.add_dependency "rake", ">= 10.0"
-  spec.add_dependency "heroku", "~> 3.43"
-  spec.add_dependency "slack-notify", "~> 0.4.1"
+  spec.add_dependency "platform-api", ">= 0.6.0"
+  spec.add_dependency "slack-notify", ">= 0.4.1"
 
   spec.add_development_dependency "bundler", "~> 1.11"
   spec.add_development_dependency "pry"

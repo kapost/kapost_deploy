@@ -1,5 +1,7 @@
+# frozen_string_literal: true
 require "rake"
 require "rake/tasklib"
+require "kapost_deploy/heroku/app_promoter"
 
 module KapostDeploy
   ##
@@ -8,6 +10,8 @@ module KapostDeploy
   #   require 'kapost_deploy/task'
   #
   #   KapostDeploy::Task.new do |config|
+  #     config.pipeline = 'cabbage'
+  #     config.heroku_api_token = ENV.fetch('HEROKU_API_TOKEN')
   #     config.app = 'cabbage-democ'
   #     config.to = 'cabbage-prodc'
   #
@@ -20,8 +24,10 @@ module KapostDeploy
   # after_stage, before_promote, promote, after_promote
   #
   #   KapostDeploy::Task.new(:stage) do |config|
+  #     config.pipeline = 'cabbage'
+  #     config.heroku_api_token = ENV.fetch('HEROKU_API_TOKEN')
   #     config.app = 'cabbage-stagingc'
-  #     config.to = %w[cabbage-sandboxc cabbage-democ]
+  #     config.to = 'cabbage-sandboxc'
   #
   #     config.after do
   #       sleep 60*2 # wait for dynos to restart
@@ -31,6 +37,8 @@ module KapostDeploy
   #   end
   #
   #   KapostDeploy::Task.new(:promote) do |config|
+  #     config.pipeline = 'cabbage'
+  #     config.heroku_api_token = ENV.fetch('HEROKU_API_TOKEN')
   #     config.app = 'cabbage-sandbox1c'
   #     config.to = 'cabbage-prodc'
   #
@@ -43,19 +51,24 @@ module KapostDeploy
   class Task < Rake::TaskLib
     attr_accessor :app
 
-    attr_reader :to
+    attr_accessor :to
+
+    attr_accessor :pipeline
+
+    attr_accessor :heroku_api_token
 
     attr_accessor :name
 
-    def initialize(name = :promote, shell: method(:sh)) # :yield: self
-      defaults
-      @name = name
-      @shell = shell
+    attr_accessor :options
 
-      yield self if block_given?
+    def self.define(name = :promote) # :yield: self
+      instance = new(name)
 
-      validate
-      define
+      yield instance if block_given?
+
+      instance.validate
+      instance.define
+      instance
     end
 
     def before(&block)
@@ -66,55 +79,60 @@ module KapostDeploy
       @after = block
     end
 
-    def to=(to)
-      @to = Array(to)
-    end
-
     def add_plugin(plugin)
       plugins << plugin
     end
 
     def defaults
       @name = :promote
+      @pipeline = nil
+      @heroku_api_token = nil
       @app = nil
-      @slack_config = nil
-      @to = []
+      @to = nil
       @before = -> {}
       @after = -> {}
       @plugins = []
+      @options = {}
     end
 
     def validate
+      fail "No 'heroku_api_token' configured."\
+           "Set config.heroku_api_token to your API secret token" if heroku_api_token.nil?
+      fail "No 'pipeline' configured. Set config.pipeline to the name of your pipeline" if pipeline.nil?
       fail "No 'app' configured. Set config.app to the application to be promoted" if app.nil?
-      fail "No 'to' configured. Set config.to to the downstream application(s) to be promoted to" if to.empty?
+      fail "No 'to' configured. Set config.to to the downstream application to be promoted to" if to.nil?
     end
 
     def define
       define_hooks
 
-      desc "Promote #{app} to #{to.join(",")}"
+      desc "Promote #{app} to #{to}"
       task name.to_s do
-        shell("heroku plugins:install heroku-pipelines") unless pipelines_installed?
         promote_with_hooks
       end
     end
 
     private
 
+    def initialize(name)
+      defaults
+      self.name = name
+    end
+
     attr_accessor :plugins
+
+    def promoter
+      @promoter ||= KapostDeploy::Heroku::AppPromoter.new(pipeline, token: heroku_api_token)
+    end
 
     def promote_with_hooks
       Rake.application[:"#{name}:before_#{name}"].execute
-      promote
+      promoter.promote(from: app, to: to)
       Rake.application[:"#{name}:after_#{name}"].execute
     end
 
     def shell(command)
       @shell.call(command)
-    end
-
-    def pipelines_installed?
-      `heroku plugins` =~ /^heroku-pipelines@/
     end
 
     def define_hooks
@@ -133,10 +151,6 @@ module KapostDeploy
           plugin.send(kind) if plugin.respond_to?(kind)
         end
       end
-    end
-
-    def promote
-      shell("heroku pipelines:promote -a #{app} --to #{to.join(",")}")
     end
   end
 end
