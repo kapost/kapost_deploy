@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "spec_helper"
 
 RSpec.describe KapostDeploy::Task do
@@ -6,15 +7,15 @@ RSpec.describe KapostDeploy::Task do
   end
 
   before do
-    allow(subject).to receive(:slack).and_return(slack_double)
-    allow(subject).to receive(:identity).and_return("brandonc")
-    allow(subject).to receive(:pipelines_installed?).and_return(true)
+    allow(subject).to receive(:promoter).and_return(promoter_double)
   end
 
-  subject! do
-    described_class.new(name, shell: ->(cmd) { command_spy.command(cmd) }) do |config|
+  subject do
+    described_class.define(name) do |config|
       config.app = "scaryskulls-democ"
       config.to = "scaryskulls-prodc"
+      config.pipeline = "scaryskulls"
+      config.heroku_api_token = "123"
 
       config.before do
         hook_spy.before
@@ -23,13 +24,15 @@ RSpec.describe KapostDeploy::Task do
       config.after do
         hook_spy.after
       end
+
+      plugins.each { |p| config.add_plugin(p) }
     end
   end
 
   let(:name) { :promote }
   let(:hook_spy) { double("hook spies", before: true, after: true) }
-  let(:command_spy) { double("command_spy", command: true) }
-  let(:slack_double) { double("slack", notify: true) }
+  let(:promoter_double) { double("promoter", promote: true) }
+  let(:plugins) { [] }
 
   shared_examples_for "a task definer" do
     it "creates named task" do
@@ -60,7 +63,7 @@ RSpec.describe KapostDeploy::Task do
       it "calls only before hook" do
         Rake::Task["#{name}:before_#{name}"].execute
         expect(hook_spy).to have_received(:before).once
-        expect(command_spy).to_not have_received(:command)
+        expect(promoter_double).to_not have_received(:promote)
       end
     end
 
@@ -69,30 +72,37 @@ RSpec.describe KapostDeploy::Task do
         Rake::Task["#{name}:after_#{name}"].execute
         expect(hook_spy).to have_received(:after).once
         expect(hook_spy).to_not have_received(:before)
-        expect(command_spy).to_not have_received(:command)
+        expect(promoter_double).to_not have_received(:promote)
       end
     end
   end
 
   shared_examples_for "a promote command" do
-    let(:expected_command) { "heroku pipelines:promote -a scaryskulls-democ --to scaryskulls-prodc" }
     it "promotes to production" do
       Rake::Task[name].execute
-      expect(command_spy).to have_received(:command).with(expected_command).once
+      expect(promoter_double).to have_received(:promote).with(from: "scaryskulls-democ", to: "scaryskulls-prodc").once
     end
   end
 
-  shared_examples_for "a slack notifier" do
-    it "notifies slack after promote" do
-      Rake::Task[name].execute
-      msg = "brandonc promoted *scaryskulls-democ* to *scaryskulls-prodc*\nadditional!"
-      expect(slack_double).to have_received(:notify).with(msg)
+  shared_examples_for "a plugin invoker" do
+    let(:plugin_double) { double("plugin", before: true, after: true) }
+    let(:plugin_class_double) { double("plugin class", new: plugin_double) }
+
+    context "when plugins are present" do
+      let(:plugins) { [plugin_class_double, plugin_class_double] }
+
+      it "invokes each plugins' before/after hooks" do
+        Rake::Task[name].execute
+        expect(plugin_double).to have_received(:before).twice
+        expect(plugin_double).to have_received(:after).twice
+      end
     end
   end
 
   it_behaves_like "a task definer"
   it_behaves_like "a hook invoker"
   it_behaves_like "a promote command"
+  it_behaves_like "a plugin invoker"
 
   context "customized name" do
     let(:name) { :gobbledigook }
@@ -100,21 +110,6 @@ RSpec.describe KapostDeploy::Task do
     it_behaves_like "a task definer"
     it_behaves_like "a hook invoker"
     it_behaves_like "a promote command"
-  end
-
-  context "slack config present" do
-    subject! do
-      described_class.new(name, shell: ->(cmd) { command_spy.command(cmd) }) do |config|
-        config.app = "scaryskulls-democ"
-        config.to = "scaryskulls-prodc"
-
-        config.slack_config = {
-          webhook_url: "https://daredevil.kapost.com",
-          additional_message: "additional!"
-        }
-      end
-    end
-
-    it_behaves_like "a slack notifier"
+    it_behaves_like "a plugin invoker"
   end
 end

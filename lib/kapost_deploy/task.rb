@@ -1,6 +1,7 @@
+# frozen_string_literal: true
 require "rake"
 require "rake/tasklib"
-require "slack-notify"
+require "kapost_deploy/heroku/app_promoter"
 
 module KapostDeploy
   ##
@@ -8,7 +9,9 @@ module KapostDeploy
   #
   #   require 'kapost_deploy/task'
   #
-  #   KapostDeploy::Task.new do |config|
+  #   KapostDeploy::Task.define do |config|
+  #     config.pipeline = 'cabbage'
+  #     config.heroku_api_token = ENV.fetch('HEROKU_API_TOKEN')
   #     config.app = 'cabbage-democ'
   #     config.to = 'cabbage-prodc'
   #
@@ -17,48 +20,27 @@ module KapostDeploy
   #     end
   #   end
   #
-  # A slightly more complex example which will create 6 rake tasks: before_stage, stage,
-  # after_stage, before_promote, promote, after_promote
-  #
-  #   KapostDeploy::Task.new(:stage) do |config|
-  #     config.app = 'cabbage-stagingc'
-  #     config.to = %w[cabbage-sandboxc cabbage-democ]
-  #
-  #     config.after do
-  #       sleep 60*2 # wait for dynos to restart
-  #       notifier.ping "The eagle has landed. [Go validate](https://testbed.sandbox.com/dashboard)!"
-  #       Launchy.open("https://testbed.sandbox.com/dashboard")
-  #     end
-  #   end
-  #
-  #   KapostDeploy::Task.new(:promote) do |config|
-  #     config.app = 'cabbage-sandbox1c'
-  #     config.to = 'cabbage-prodc'
-  #
-  #     config.before do
-  #       puts 'Are you sure you did x, y, and z? yes/no: '
-  #       confirm = gets.strip
-  #       exit(1) unless confirm.downcase == 'yes'
-  #     end
-  #   end
   class Task < Rake::TaskLib
     attr_accessor :app
 
-    attr_reader :to
+    attr_accessor :to
+
+    attr_accessor :pipeline
+
+    attr_accessor :heroku_api_token
 
     attr_accessor :name
 
-    attr_accessor :slack_config
+    attr_accessor :options
 
-    def initialize(name = :promote, shell: method(:sh)) # :yield: self
-      defaults
-      @name = name
-      @shell = shell
+    def self.define(name = :promote) # :yield: self
+      instance = new(name)
 
-      yield self if block_given?
+      yield instance if block_given?
 
-      validate
-      define
+      instance.validate
+      instance.define
+      instance
     end
 
     def before(&block)
@@ -69,81 +51,78 @@ module KapostDeploy
       @after = block
     end
 
-    def to=(to)
-      @to = Array(to)
+    def add_plugin(plugin)
+      plugins << plugin
     end
 
     def defaults
       @name = :promote
+      @pipeline = nil
+      @heroku_api_token = nil
       @app = nil
-      @slack_config = nil
-      @to = []
+      @to = nil
       @before = -> {}
       @after = -> {}
+      @plugins = []
+      @options = {}
     end
 
     def validate
+      fail "No 'heroku_api_token' configured."\
+           "Set config.heroku_api_token to your API secret token" if heroku_api_token.nil?
+      fail "No 'pipeline' configured. Set config.pipeline to the name of your pipeline" if pipeline.nil?
       fail "No 'app' configured. Set config.app to the application to be promoted" if app.nil?
-      fail "No 'to' configured. Set config.to to the downstream application(s) to be promoted to" if to.empty?
+      fail "No 'to' configured. Set config.to to the downstream application to be promoted to" if to.nil?
     end
 
     def define
       define_hooks
 
-      desc "Promote #{app} to #{to.join(",")}"
+      desc "Promote #{app} to #{to}"
       task name.to_s do
-        shell("heroku plugins:install heroku-pipelines") unless pipelines_installed?
-        @before.call
-        promote
-        notify_slack
-        @after.call
+        promote_with_hooks
       end
     end
 
     private
 
+    def initialize(name)
+      defaults
+      self.name = name
+    end
+
+    attr_accessor :plugins
+
+    def promoter
+      @promoter ||= KapostDeploy::Heroku::AppPromoter.new(pipeline, token: heroku_api_token)
+    end
+
+    def promote_with_hooks
+      Rake.application[:"#{name}:before_#{name}"].execute
+      promoter.promote(from: app, to: to)
+      Rake.application[:"#{name}:after_#{name}"].execute
+    end
+
     def shell(command)
       @shell.call(command)
     end
 
-    def pipelines_installed?
-      `heroku plugins` =~ /^heroku-pipelines@/
-    end
-
     def define_hooks
       namespace :"#{name}" do
-        desc "Perform after-#{name} tasks"
-        task :"after_#{name}" do
-          @after.call
-        end
-
-        desc "Perform before-#{name} tasks"
-        task :"before_#{name}" do
-          @before.call
-        end
+        define_hook(:before)
+        define_hook(:after)
       end
     end
 
-    def promote
-      shell("heroku pipelines:promote -a #{app} --to #{to.join(",")}")
-    end
-
-    def notify_slack
-      return unless slack_config
-
-      addl = slack_config.fetch(:additional_message, "")
-      addl = "\n#{addl}" unless addl.empty?
-
-      message = "#{identity} promoted *#{app}* to *#{to.join(",")}*#{addl}"
-      slack.notify(message)
-    end
-
-    def identity
-      @identity ||= `whoami`.chomp
-    end
-
-    def slack
-      @slack ||= SlackNotify::Client.new(slack_config)
+    def define_hook(kind)
+      desc "Perform #{kind}-#{name} tasks"
+      task :"#{kind}_#{name}" do
+        instance_variable_get(:"@#{kind}").call
+        plugins.each do |p|
+          plugin = p.new(self)
+          plugin.send(kind) if plugin.respond_to?(kind)
+        end
+      end
     end
   end
 end
