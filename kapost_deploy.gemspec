@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rake", ">= 10.0"
   spec.add_dependency "platform-api", ">= 0.6.0"
   spec.add_dependency "slack-notify", ">= 0.4.1"
+  spec.add_dependency "honeybadger", "~> 2.0"
 
   spec.add_development_dependency "bundler", "~> 1.11"
   spec.add_development_dependency "pry"
@@ -32,6 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rubocop", "~> 0.37"
   spec.add_development_dependency "codeclimate-test-reporter"
   spec.add_development_dependency "rubygems-tasks"
+  spec.add_development_dependency "climate_control"
 
   spec.files = Dir["lib/**/*", "vendor/**/*"]
   spec.extra_rdoc_files = Dir["README*", "LICENSE*"]
