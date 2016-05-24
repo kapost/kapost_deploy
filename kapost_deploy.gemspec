@@ -33,7 +33,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "terminal-notifier-guard"
   spec.add_development_dependency "rubocop", "~> 0.37"
   spec.add_development_dependency "codeclimate-test-reporter"
-  spec.add_development_dependency "rubygems-tasks"
   spec.add_development_dependency "climate_control"
 
   spec.files = Dir["lib/**/*", "vendor/**/*"]
