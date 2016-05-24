@@ -1,6 +1,6 @@
 # frozen_string_literal: true
+
+require "gemsmith/rake/setup"
 Dir.glob("lib/tasks/*.rake").each { |file| load file }
-require "rubygems/tasks"
-Gem::Tasks.new
 
 task default: %w[spec rubocop]

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "spec_helper"
 require "kapost_deploy/plugins/slack_after_promote"
 

@@ -19,23 +19,20 @@ Gem::Specification.new do |spec|
   spec.add_dependency "honeybadger", "~> 2.0"
 
   spec.add_development_dependency "bundler", "~> 1.11"
+  spec.add_development_dependency "gemsmith", "~> 7.7"
   spec.add_development_dependency "pry"
   spec.add_development_dependency "pry-byebug"
-  spec.add_development_dependency "pry-remote"
   spec.add_development_dependency "pry-state"
-  spec.add_development_dependency "pry-rescue"
-  spec.add_development_dependency "pry-stack_explorer"
   spec.add_development_dependency "rspec", "~> 3.4"
   spec.add_development_dependency "rb-fsevent" # Guard file events for OSX.
   spec.add_development_dependency "guard-rspec"
   spec.add_development_dependency "terminal-notifier"
   spec.add_development_dependency "terminal-notifier-guard"
-  spec.add_development_dependency "rubocop", "~> 0.37"
+  spec.add_development_dependency "rubocop", "~> 0.40"
   spec.add_development_dependency "codeclimate-test-reporter"
-  spec.add_development_dependency "rubygems-tasks"
   spec.add_development_dependency "climate_control"
 
-  spec.files = Dir["lib/**/*", "vendor/**/*"]
+  spec.files = Dir["lib/**/*"]
   spec.extra_rdoc_files = Dir["README*", "LICENSE*"]
   spec.require_paths = ["lib"]
 end
