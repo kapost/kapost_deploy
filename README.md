@@ -10,6 +10,7 @@
 
 - [Features](#features)
 - [Requirements](#requirements)
+- [Configuration Options](#configuration-options)
 - [Setup](#setup)
 - [Tests](#tests)
 - [Versioning](#versioning)
