@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "honeybadger", "~> 2.0"
 
   spec.add_development_dependency "bundler", "~> 1.11"
+  spec.add_development_dependency "gemsmith", "~> 7.7"
   spec.add_development_dependency "pry"
   spec.add_development_dependency "pry-byebug"
   spec.add_development_dependency "pry-remote"
