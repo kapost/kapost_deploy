@@ -3,6 +3,7 @@
 require "rake"
 require "rake/tasklib"
 require "kapost_deploy/heroku/app_promoter"
+require "kapost_deploy/plugins/validate_before_promote"
 
 module KapostDeploy
   ##
@@ -41,6 +42,7 @@ module KapostDeploy
 
       instance.validate
       instance.define
+      instance.add_plugin(KapostDeploy::Plugins::ValidateBeforePromote)
       instance
     end
 
@@ -59,7 +61,7 @@ module KapostDeploy
     def defaults
       @name = :promote
       @pipeline = nil
-      @heroku_api_token = nil
+      @heroku_api_token = ENV["HEROKU_DEPLOY_API_TOKEN"]
       @app = nil
       @to = nil
       @before = -> {}
@@ -69,8 +71,6 @@ module KapostDeploy
     end
 
     def validate
-      fail "No 'heroku_api_token' configured."\
-           "Set config.heroku_api_token to your API secret token" if heroku_api_token.nil?
       fail "No 'pipeline' configured. Set config.pipeline to the name of your pipeline" if pipeline.nil?
       fail "No 'app' configured. Set config.app to the application to be promoted" if app.nil?
       fail "No 'to' configured. Set config.to to the downstream application to be promoted to" if to.nil?
