@@ -3,14 +3,6 @@
 require "spec_helper"
 
 RSpec.describe KapostDeploy::Task do
-  after do
-    Rake.application = Rake::Application.new
-  end
-
-  before do
-    allow(subject).to receive(:promoter).and_return(promoter_double)
-  end
-
   subject do
     described_class.define(name) do |config|
       config.app = "scaryskulls-democ"
@@ -34,6 +26,11 @@ RSpec.describe KapostDeploy::Task do
   let(:hook_spy) { double("hook spies", before: true, after: true) }
   let(:promoter_double) { double("promoter", promote: true) }
   let(:plugins) { [] }
+
+  before do
+    Rake::Task.clear
+    allow(subject).to receive(:promoter).and_return(promoter_double)
+  end
 
   shared_examples_for "a task definer" do
     it "creates named task" do

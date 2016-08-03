@@ -87,21 +87,28 @@ module KapostDeploy
 
     private
 
-    def initialize(name)
+    def initialize(name, scope: Rake.application.current_scope.path)
       defaults
-      self.name = name
+      @name = name
+      @scope = scope
     end
 
     attr_accessor :plugins
+    attr_reader :scope
+
+    def hook_name(type)
+      return "#{name}:#{type}_#{name}" if scope.empty?
+      "#{scope}:#{name}:#{type}_#{name}"
+    end
 
     def promoter
       @promoter ||= KapostDeploy::Heroku::AppPromoter.new(pipeline, token: heroku_api_token)
     end
 
     def promote_with_hooks
-      Rake.application[:"#{name}:before_#{name}"].execute
+      Rake.application[hook_name("before")].execute
       promoter.promote(from: app, to: to)
-      Rake.application[:"#{name}:after_#{name}"].execute
+      Rake.application[hook_name("after")].execute
     end
 
     def shell(command)
