@@ -102,6 +102,7 @@ module KapostDeploy
     end
 
     def promoter
+      fail "`HEROKU_DEPLOY_API_TOKEN` env var must be provided" unless heroku_api_token
       @promoter ||= KapostDeploy::Heroku::AppPromoter.new(pipeline, token: heroku_api_token)
     end
 
