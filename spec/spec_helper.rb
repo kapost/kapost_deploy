@@ -3,8 +3,8 @@
 require "bundler/setup"
 
 if ENV["CI"]
-  require "codeclimate-test-reporter"
-  CodeClimate::TestReporter.start
+  require "simplecov"
+  SimpleCov.start
 end
 
 require "kapost_deploy"
