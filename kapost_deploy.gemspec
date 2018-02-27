@@ -13,24 +13,25 @@ Gem::Specification.new do |spec|
   spec.description = "Execute deployments swiftly and safely using `rake promote`"
   spec.license = "MIT"
 
-  spec.add_dependency "rake", ">= 10.0"
-  spec.add_dependency "platform-api", ">= 0.6.0"
-  spec.add_dependency "slack-notify", ">= 0.4.1"
   spec.add_dependency "honeybadger", "~> 2.0"
+  spec.add_dependency "platform-api", ">= 0.6.0"
+  spec.add_dependency "rake", ">= 10.0"
+  spec.add_dependency "slack-notify", ">= 0.4.1"
 
   spec.add_development_dependency "bundler", "~> 1.11"
-  spec.add_development_dependency "gemsmith", "~> 7.7"
+  spec.add_development_dependency "climate_control"
+  spec.add_development_dependency "codeclimate-test-reporter"
+  spec.add_development_dependency "gemsmith", "~> 10.0"
+  spec.add_development_dependency "guard-rspec"
   spec.add_development_dependency "pry"
   spec.add_development_dependency "pry-byebug"
   spec.add_development_dependency "pry-state"
-  spec.add_development_dependency "rspec", "~> 3.4"
   spec.add_development_dependency "rb-fsevent" # Guard file events for OSX.
-  spec.add_development_dependency "guard-rspec"
+  spec.add_development_dependency "rspec", "~> 3.4"
+  spec.add_development_dependency "rubocop", "~> 0.52"
+  spec.add_development_dependency "seismograph"
   spec.add_development_dependency "terminal-notifier"
   spec.add_development_dependency "terminal-notifier-guard"
-  spec.add_development_dependency "rubocop", "~> 0.40"
-  spec.add_development_dependency "codeclimate-test-reporter"
-  spec.add_development_dependency "climate_control"
 
   spec.files = Dir["lib/**/*"]
   spec.extra_rdoc_files = Dir["README*", "LICENSE*"]
