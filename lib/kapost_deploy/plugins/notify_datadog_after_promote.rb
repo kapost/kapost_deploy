@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "kapost_deploy/heroku/app_releases"
+require "kapost_deploy/seismograph/notifier"
 
 module KapostDeploy
   module Plugins
