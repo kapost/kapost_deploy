@@ -4,7 +4,6 @@ require "spec_helper"
 require "climate_control"
 require "seismograph"
 require "kapost_deploy/plugins/notify_datadog_after_promote"
-require "kapost_deploy/seismograph/notifier"
 
 RSpec.describe KapostDeploy::Plugins::NotifyDatadogAfterPromote do
   let(:git_config) { { github_repo: "kapost/kapost_deploy", path: "." } }
