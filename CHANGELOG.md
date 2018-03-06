@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.2
+
+- Added missing require line for `KapostDeploy::Plugins::NotifyDatadogAfterPromote` to work.
+
 ## v0.6.1
 
 - Republishing v0.6.0 due to publishing issues.
