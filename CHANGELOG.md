@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Opened up honeybadger dependency version from only 2.X to anything >= 2.0.
+
 ## v0.6.2
 
 - Added missing require line for `KapostDeploy::Plugins::NotifyDatadogAfterPromote` to work.
