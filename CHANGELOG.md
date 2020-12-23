@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v0.7.1] - 2020-12-23
+
+- Updated some gem dependencies mainly to get on a later version of `faraday`
+  which was set from the `slack-notifier` gem. 
+
 ## [v0.7.0] - 2018-11-30
 
 - Opened up honeybadger dependency version from only 2.X to anything >= 2.0.
